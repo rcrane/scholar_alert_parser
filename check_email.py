@@ -230,7 +230,7 @@ if __name__ == "__main__":
     if not MAIL_HOST:
         print("MAIL_HOST not set in mail_setting.py!")
         exit()
-    if not MAIL_USRE:
+    if not MAIL_USER:
         print("MAIL_USER not set in mail_setting.py!")
         exit()
     if not MAIL_PASS:
