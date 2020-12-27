@@ -5,7 +5,7 @@ import html
 from email.message import EmailMessage
 import imaplib
 import email
-from mail_data import *
+from mail_settings import *
 
 
 BLACKLIST=[ \
@@ -227,4 +227,14 @@ def scan_email_starttls():
 
 
 if __name__ == "__main__":
+    if not MAIL_HOST:
+        print("MAIL_HOST not set in mail_setting.py!")
+        exit()
+    if not MAIL_USRE:
+        print("MAIL_USER not set in mail_setting.py!")
+        exit()
+    if not MAIL_PASS:
+        print("MAIL_PASS not set in mail_setting.py!")
+        exit()
+        
     scan_email_starttls()
