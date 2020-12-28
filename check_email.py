@@ -205,7 +205,7 @@ def scan_email_starttls():
         total = total - 1
         print("E-Mails left: " + str(total) + "       ", end='\r')
 
-    print("Found: " + str(len(mydata)) + " papers.\n" + str(doubles) + " already present in papers.csv.\nWriting to disk...")
+    print("Found: " + str(len(mydata)) + " papers.\n" + str(doubles) + " papers already present in papers.csv.\nWriting to disk...")
 
     f = open('papers.csv', 'w')
     for k, v in mydata.items():
