@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
+"""A tool to parse emails from Google-Scholar."""
 
 from lxml import etree
 import html
 import imaplib
 import email
-from mail_data import MAIL_HOST, MAIL_PORT_IN, MAIL_USER, MAIL_PASS
+from mail_settings import MAIL_HOST, MAIL_PORT_IN, MAIL_USER, MAIL_PASS
 
 
 BLACKLIST = [
@@ -22,16 +23,16 @@ SUBJECT_WHITELIST = [
 
 
 def check_blacklist(arg: str):
-    for b in BLACKLIST:
-        if b in arg:
+    for word in BLACKLIST:
+        if word in arg:
             return True
 
     return False
 
 
 def check_subject_whitelist(arg: str):
-    for b in SUBJECT_WHITELIST:
-        if b in arg:
+    for word in SUBJECT_WHITELIST:
+        if word in arg:
             return True
 
     return False
@@ -98,9 +99,9 @@ def fetch_title_link_from_elements(element):
     # TODO: check for "patent" in text after link, in case link url didn't contain "patent"
 
     if len(element) > 0:
-        for e in element:
+        for child in element:
             # print(str(etree.tostring(e)), len(e))
-            return_list.extend(fetch_title_link_from_elements(e))
+            return_list.extend(fetch_title_link_from_elements(child))
 
     return return_list
 
@@ -108,11 +109,11 @@ def fetch_title_link_from_elements(element):
 def parse_html_body(msg):
 
     parser = etree.HTMLParser(recover=True)
-    hl = etree.HTML(msg, parser)
+    html_tree = etree.HTML(msg, parser)
     ret = {}
     titles = []
 
-    for element in hl.iter('a'):
+    for element in html_tree.iter('a'):
         # TODO: iter also returns img tags
         titles.extend(fetch_title_link_from_elements(element))
 
@@ -124,31 +125,31 @@ def parse_html_body(msg):
 
 
 def scan_email_starttls():
-    M = imaplib.IMAP4(host=MAIL_HOST, port=MAIL_PORT_IN)
-    mydata = {}
+    mail_client = imaplib.IMAP4(host=MAIL_HOST, port=MAIL_PORT_IN)
+    papers = {}
 
     try:
-        f = open('papers.csv', 'r')
-        for l in f.readlines():
-            mydata[l.split(";")[0]] = l.split(";")[1].replace("\n", "")
-        f.close
+        paper_file = open('papers.csv', 'r')
+        for line in paper_file.readlines():
+            papers[line.split(";")[0]] = line.split(";")[1].replace("\n", "")
+        paper_file.close
     except FileNotFoundError:
         print("papers.csv does not exist.")
 
     doubles = 0
 
-    M.starttls()
-    typ, data = M.login(MAIL_USER, MAIL_PASS)
+    mail_client.starttls()
+    typ, data = mail_client.login(MAIL_USER, MAIL_PASS)
     if "OK" != str(typ):
         print("Login: " + str(typ))
         exit(-1)
 
-    typ, data = M.select('inbox')
+    typ, data = mail_client.select('inbox')
     if "OK" != str(typ):
         print("Select inbox: " + str(typ))
         exit(-2)
 
-    typ, data = M.uid('search', None, "ALL")
+    typ, data = mail_client.uid('search', None, "ALL")
     if "OK" != str(typ):
         print("Search for messages: " + str(typ))
         exit(-3)
@@ -158,7 +159,7 @@ def scan_email_starttls():
     print("Found " + str(total) + " E-Mails")
     for num in reversed(liste):
 
-        typ, data = M.uid('fetch', num, '(RFC822.SIZE BODY[HEADER.FIELDS (SUBJECT)])')
+        typ, data = mail_client.uid('fetch', num, '(RFC822.SIZE BODY[HEADER.FIELDS (SUBJECT)])')
         if "OK" != str(typ):
             print("Get Subject: " + str(typ))
             exit(-4)
@@ -177,40 +178,40 @@ def scan_email_starttls():
 
             # print(subject)
             # typ, data = M.fetch(num, '(UID BODY[TEXT])')
-            typ, data = M.uid('fetch', num, '(RFC822)')
+            typ, data = mail_client.uid('fetch', num, '(RFC822)')
             if data[0]:
                 msg = email.message_from_bytes((data[0][1]))
 
                 if "text/plain" == str(msg.get_content_type()):
-                    for k, v in parse_plain_body(msg.get_payload()).items():
-                        if k in mydata.keys():
+                    for key, val in parse_plain_body(msg.get_payload()).items():
+                        if key in papers.keys():
                             doubles = doubles + 1
 
-                        mydata[k] = v
+                        papers[key] = val
                 elif "multipart" == str(msg.get_content_maintype()):
                     for part in msg.walk():
                         if "text/html" == str(part.get_content_type()):
-                            for k, v in parse_html_body(part.get_payload(decode=True)).items():
-                                if k in mydata.keys():
+                            for key, val in parse_html_body(part.get_payload(decode=True)).items():
+                                if key in papers.keys():
                                     doubles = doubles + 1
 
-                                mydata[k] = v
+                                papers[key] = val
                             break
 
                 # Copy mail to trash and then delete it from inbox
-                typ, data = M.uid('COPY', num, 'INBOX.Trash')
-                typ, data = M.uid('STORE', num, '+FLAGS', '\\Deleted')
-                M.expunge()
+                typ, data = mail_client.uid('COPY', num, 'INBOX.Trash')
+                typ, data = mail_client.uid('STORE', num, '+FLAGS', '\\Deleted')
+                mail_client.expunge()
 
         total = total - 1
         print("E-Mails left: " + str(total) + "       ", end='\r')
 
-    print("Found: " + str(len(mydata)) + " papers.\n" + str(doubles) + " papers already present in papers.csv.\nWriting to disk...")
+    print("Found: " + str(len(papers)) + " papers.\n" + str(doubles) + " papers already present in papers.csv.\nWriting to disk...")
 
-    f = open('papers.csv', 'w')
-    for k, v in mydata.items():
-        f.write(str(k) + ";" + str(v) + "\n")
-    f.close
+    paper_file = open('papers.csv', 'w')
+    for key, val in papers.items():
+        paper_file.write(str(key) + ";" + str(val) + "\n")
+    paper_file.close
 
 
 if __name__ == "__main__":
