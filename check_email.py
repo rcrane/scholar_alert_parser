@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""A tool to parse emails from Google-Scholar."""
+'''A tool to parse emails from Google-Scholar.'''
 
 from lxml import etree
 import html
@@ -25,6 +25,9 @@ SUBJECT_WHITELIST = [
 
 
 def check_blacklist(arg: str):
+    '''Check if arg contains a keyword from the blacklist.
+       Returns True if keyword is found, False otherwise'''
+
     for word in BLACKLIST:
         if word in arg:
             return True
@@ -33,6 +36,9 @@ def check_blacklist(arg: str):
 
 
 def check_subject_whitelist(arg: str):
+    '''Check if arg contains a keyword from the subject_whitelist.
+       Returns True if keyword is found, False otherwise'''
+
     for word in SUBJECT_WHITELIST:
         if word in arg:
             return True
@@ -41,6 +47,9 @@ def check_subject_whitelist(arg: str):
 
 
 def parse_plain_body(msg):
+    '''Parse plain-text e-mail messages.
+       Returns a set containing title:link entries'''
+
     title = ""
     link = ""
     ret = {}
@@ -76,6 +85,8 @@ def parse_plain_body(msg):
 
 
 def fetch_title_link_from_elements(element):
+    '''Parse an html element and extract a paper title and link from <a> tags.
+       Returns a list with title,link pairs'''
 
     return_list = []
     text = str(etree.tostring(element, pretty_print=True, method="html").decode())
@@ -107,6 +118,8 @@ def fetch_title_link_from_elements(element):
 
 
 def parse_html_body(msg):
+    '''Parse html e-mail messages.
+       Returns a set containing title:link entries'''
 
     parser = etree.HTMLParser(recover=True)
     html_tree = etree.HTML(msg, parser)
@@ -125,6 +138,10 @@ def parse_html_body(msg):
 
 
 def scan_email_starttls():
+    '''Establishes an IMAP connection and scans for e-mails with subjects of interest.
+       E-Mails are parsed for paper titles and links.
+       A list of paper titles and links is stored in a csv file.'''
+
     try:
         mail_client = imaplib.IMAP4(host=MAIL_HOST, port=MAIL_PORT_IN)
     except ConnectionRefusedError:
@@ -133,7 +150,7 @@ def scan_email_starttls():
     except gaierror:
         print("The server did not accept the connection request!\nCheck if MAIL_HOST is correct.")
         exit(-5)
-    
+
     papers = {}
 
     try:
@@ -217,7 +234,8 @@ def scan_email_starttls():
         total = total - 1
         print("E-Mails left: " + str(total) + "       ", end='\r')
 
-    print("Found: " + str(len(papers)) + " papers.\n" + str(doubles) + " papers where already present in papers.csv.\nWriting to disk (papers.csv).")
+    print("Found: " + str(len(papers)) + " papers.\n" + str(doubles) + " papers where already present in papers.csv.\n \
+        Writing to disk (papers.csv).")
 
     paper_file = open('papers.csv', 'w')
     for key, val in papers.items():
