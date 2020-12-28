@@ -19,6 +19,10 @@ A tool to parse emails from Google-Scholar
 # Before you start
 
 * You have to adapt "mail_settings.py" to provide credentials and the URL for you e-mail account.
+
+# How to start
+
+* `python3 check_email.py`
   
 # Issues
 

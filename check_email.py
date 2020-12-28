@@ -44,7 +44,6 @@ def parse_plain_body(msg):
     ret = {}
 
     msg = msg.splitlines()
-    # checkforpatent = False
 
     for i in range(0, len(msg)):
         if not msg[i]:
@@ -57,7 +56,7 @@ def parse_plain_body(msg):
 
         if line.startswith("<htt"):
             if "patent" in line:
-                # Not interested it patents
+                # Not interested in patents
                 continue
 
             link = line.replace("http://scholar.google.de/scholar_url?url=", "").replace("<", "").replace(">", "").split(".pdf")[0] + ".pdf"
@@ -67,7 +66,6 @@ def parse_plain_body(msg):
             title = title.strip().strip("[PDF]").strip()
             title = title.strip().strip("[HTML]").strip()
             ret[title] = link
-            # checkforpatent = True
 
         # TODO: check for "patent" in text after link, in case link url didn't contain "patent"
 
@@ -177,7 +175,6 @@ def scan_email_starttls():
         if check_subject_whitelist(subject):
 
             # print(subject)
-            # typ, data = M.fetch(num, '(UID BODY[TEXT])')
             typ, data = mail_client.uid('fetch', num, '(RFC822)')
             if data[0]:
                 msg = email.message_from_bytes((data[0][1]))
@@ -216,13 +213,13 @@ def scan_email_starttls():
 
 if __name__ == "__main__":
     if not MAIL_HOST:
-        print("MAIL_HOST not set in mail_setting.py!")
+        print("MAIL_HOST not set in mail_settings.py!")
         exit()
     if not MAIL_USER:
-        print("MAIL_USER not set in mail_setting.py!")
+        print("MAIL_USER not set in mail_settings.py!")
         exit()
     if not MAIL_PASS:
-        print("MAIL_PASS not set in mail_setting.py!")
+        print("MAIL_PASS not set in mail_settings.py!")
         exit()
 
     scan_email_starttls()
