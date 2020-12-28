@@ -1,3 +1,4 @@
 workfile
 *.pyc
 mail_data.py
+papers.csv

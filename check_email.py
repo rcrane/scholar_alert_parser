@@ -126,17 +126,18 @@ def scan_email_starttls():
     mydata = {}
 
     try:
-        f = open('workfile', 'r')
+        f = open('papers.csv', 'r')
         for l in f.readlines():
             mydata[l.split(";")[0]] = l.split(";")[1].replace("\n","")
         f.close
+    except FileNotFoundError as e:
+        print("papers.csv does not exist.")
+        
     finally:
         try:
             f.close()
         except:
             pass
-
-
 
     doubles = 0
     try:    
@@ -153,14 +154,13 @@ def scan_email_starttls():
 
         typ, data = M.uid('search', None, "ALL")
         if "OK" != str(typ):
-            print("Get all messages: " + str(typ))
+            print("Search for messages: " + str(typ))
             exit(-3)
 
         liste = data[0].split()
         total = len(liste)
+        print("Found " + str(total) + " E-Mails")
         for num in reversed(liste):
-            print("E-Mails left: " + str(total) + "       ", end='\r')
-            total = total - 1
             
             typ, data = M.uid('fetch', num, '(RFC822.SIZE BODY[HEADER.FIELDS (SUBJECT)])')
             if "OK" != str(typ):
@@ -206,7 +206,9 @@ def scan_email_starttls():
                     typ, data = M.uid('COPY', num, 'INBOX.Trash')
                     typ, data = M.uid('STORE', num, '+FLAGS', '\\Deleted') 
                     M.expunge()
-                                      
+
+            total = total - 1
+            print("E-Mails left: " + str(total) + "       ", end='\r')                       
             
     
     finally:
@@ -216,12 +218,15 @@ def scan_email_starttls():
             pass
             M.logout()
 
-    f = open('workfile', 'w')
+    print("Found: " + str(len(mydata)) + " papers.\n" + str(doubles) + " already present in papers.csv.\nWriting to disk...")
+
+    f = open('papers.csv', 'w')
     for k,v in mydata.items():
         f.write(str(k) + ";" + str(v) + "\n")
     f.close
+    
 
-    print("\n" + str(doubles) + " doubles found!")
+    
 
     
 
