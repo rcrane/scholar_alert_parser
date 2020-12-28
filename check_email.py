@@ -4,7 +4,9 @@
 from lxml import etree
 import html
 import imaplib
+from email import header
 import email
+from socket import gaierror
 from mail_settings import MAIL_HOST, MAIL_PORT_IN, MAIL_USER, MAIL_PASS
 
 
@@ -123,7 +125,15 @@ def parse_html_body(msg):
 
 
 def scan_email_starttls():
-    mail_client = imaplib.IMAP4(host=MAIL_HOST, port=MAIL_PORT_IN)
+    try:
+        mail_client = imaplib.IMAP4(host=MAIL_HOST, port=MAIL_PORT_IN)
+    except ConnectionRefusedError:
+        print("The server did not accept the connection request!\nCheck if MAIL_PORT_IN is correct.")
+        exit(-5)
+    except gaierror:
+        print("The server did not accept the connection request!\nCheck if MAIL_HOST is correct.")
+        exit(-5)
+    
     papers = {}
 
     try:
@@ -137,7 +147,11 @@ def scan_email_starttls():
     doubles = 0
 
     mail_client.starttls()
-    typ, data = mail_client.login(MAIL_USER, MAIL_PASS)
+    try:
+        typ, data = mail_client.login(MAIL_USER, MAIL_PASS)
+    except imaplib.IMAP4.error:
+        print("Login failed.\nCheck if MAIL_USER and MAIL_PASS are correct.")
+        exit(-5)
     if "OK" != str(typ):
         print("Login: " + str(typ))
         exit(-1)
@@ -203,7 +217,7 @@ def scan_email_starttls():
         total = total - 1
         print("E-Mails left: " + str(total) + "       ", end='\r')
 
-    print("Found: " + str(len(papers)) + " papers.\n" + str(doubles) + " papers already present in papers.csv.\nWriting to disk...")
+    print("Found: " + str(len(papers)) + " papers.\n" + str(doubles) + " papers where already present in papers.csv.\nWriting to disk (papers.csv).")
 
     paper_file = open('papers.csv', 'w')
     for key, val in papers.items():
