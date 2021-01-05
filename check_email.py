@@ -163,6 +163,8 @@ def scan_email_starttls():
 
     doubles = 0
 
+    print("Loaded " + str(len(papers)) + " papers from papers.csv")
+
     mail_client.starttls()
     try:
         typ, data = mail_client.login(MAIL_USER, MAIL_PASS)
@@ -234,8 +236,7 @@ def scan_email_starttls():
         total = total - 1
         print("E-Mails left: " + str(total) + "       ", end='\r')
 
-    print("Found: " + str(len(papers)) + " papers.\n" + str(doubles) + " papers where already present in papers.csv.\n \
-        Writing to disk (papers.csv).")
+    print("A total of " + str(len(papers)) + " papers now listed.\n" + str(doubles) + " papers where already present in papers.csv.\nWriting to disk (papers.csv).")
 
     paper_file = open('papers.csv', 'w')
     for key, val in papers.items():
