@@ -201,7 +201,7 @@ def scan_email_starttls():
                 subject = (subject[0][0]).replace("\r", "").replace("\n", "").replace("\xa0", " ")
             elif len(subject) > 1:
                 subject = str(subject[1][0], subject[1][1]).replace("\r", "").replace("\n", "").replace("\xa0", " ")
-        except UnicodeDecodeError as E:
+        except UnicodeDecodeError:
             print("UnicodeDecodeError: " + str(data[0][1]))
 
         # get subject from raw data
