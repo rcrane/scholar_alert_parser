@@ -196,10 +196,13 @@ def scan_email_starttls():
             exit(-4)
 
         subject = email.header.decode_header(str(data[0][1], 'utf-8'))
-        if len(subject) == 1:
-            subject = (subject[0][0]).replace("\r", "").replace("\n", "").replace("\xa0", " ")
-        elif len(subject) > 1:
-            subject = str(subject[1][0], subject[1][1]).replace("\r", "").replace("\n", "").replace("\xa0", " ")
+        try:
+            if len(subject) == 1:
+                subject = (subject[0][0]).replace("\r", "").replace("\n", "").replace("\xa0", " ")
+            elif len(subject) > 1:
+                subject = str(subject[1][0], subject[1][1]).replace("\r", "").replace("\n", "").replace("\xa0", " ")
+        except UnicodeDecodeError as E:
+            print("UnicodeDecodeError: " + str(data[0][1]))
 
         # get subject from raw data
         # elif not subject:
